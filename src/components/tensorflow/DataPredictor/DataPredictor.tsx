@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
+import * as tf from "@tensorflow/tfjs";
 import * as tfvis from "@tensorflow/tfjs-vis";
 import { Chart, registerables } from "chart.js";
 import { Chart as ReactChart } from "react-chartjs-2";
 
-import { getData, predict } from "./helpers";
+import {
+  getData,
+  predict,
+  convertToTensor,
+  testModel,
+  createModel,
+} from "./helpers";
 
 import styles from "./DataPredictor.module.css";
 
@@ -19,7 +26,11 @@ function DataPredictor() {
   const [predictions, setPredictions] = useState<{ x: number; y: number }[]>(
     []
   );
+  const [currentEpoch, setCurrentEpoch] = useState(0);
+  const [loss, setLoss] = useState<number>();
   const [epochs, setEpochs] = useState<number>(50);
+
+  let model: tf.Sequential;
 
   // fetch data on mount
   useEffect(() => {
@@ -29,9 +40,21 @@ function DataPredictor() {
     })();
   }, []);
 
+  /** Custom callback to run at the end of each epoch */
+  const onEpochEnd = async (epoch: number, logs?: tf.Logs) => {
+    setCurrentEpoch(epoch);
+    setLoss(logs?.loss);
+    setPredictions(testModel(model, data, convertToTensor(data)));
+  };
+
   const handlePredict = async () => {
-    const [originalPoints, predictedPoints] = await predict(data, { epochs });
-    console.log(originalPoints, predictedPoints);
+    model = createModel();
+
+    const predictedPoints = await predict(data, model, {
+      epochs,
+      onEpochEnd,
+    });
+    // console.log(predictedPoints);
     setPredictions(predictedPoints);
   };
 
@@ -67,6 +90,11 @@ function DataPredictor() {
       <button type="button" onClick={handlePredict}>
         Predict
       </button>
+
+      {/* <div> */}
+      <div>Current epoch: {currentEpoch}</div>
+      {loss && <div>Loss: {loss.toFixed(8)}</div>}
+      {/* </div> */}
 
       <div className={styles.chartContainer}>
         <ReactChart

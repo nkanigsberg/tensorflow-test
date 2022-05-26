@@ -7,6 +7,11 @@ type CarSource = {
   Horsepower: number;
 };
 
+export type Options = {
+  epochs?: number;
+  onEpochEnd: (epoch: number, logs?: any) => Promise<void>;
+};
+
 export const getData = async () => {
   const carsDataResponse = await fetch(
     "https://storage.googleapis.com/tfjs-tutorials/carsData.json"
@@ -92,7 +97,8 @@ export async function trainModel(
   model: tf.Sequential,
   inputs: tf.Tensor<tf.Rank>,
   labels: tf.Tensor<tf.Rank>,
-  epochs: number = 50
+  epochs: number = 50,
+  onEpochEnd?: (epoch: number, logs?: tf.Logs) => Promise<void>
 ) {
   // Prepare the model for training.
   model.compile({
@@ -107,11 +113,14 @@ export async function trainModel(
     batchSize,
     epochs,
     shuffle: true,
-    callbacks: tfvis.show.fitCallbacks(
-      { name: "Training Performance" },
-      ["loss", "mse"],
-      { height: 200, callbacks: ["onEpochEnd"] }
-    ),
+    callbacks: [
+      { onEpochEnd },
+      tfvis.show.fitCallbacks(
+        { name: "Training Performance" },
+        ["loss", "mse"],
+        { height: 200, callbacks: ["onEpochEnd"] }
+      ),
+    ],
   });
 }
 
@@ -161,17 +170,14 @@ export function testModel(
     }
   );
 
-  return [originalPoints, predictedPoints];
+  return predictedPoints;
 }
 
-export type Options = {
-  epochs?: number;
-};
-
-export const predict = async (data: Car[], options?: Options) => {
-  // console.log("data", data);
-  const model = createModel();
-
+export const predict = async (
+  data: Car[],
+  model: tf.Sequential,
+  options?: Options
+) => {
   tfvis.show.modelSummary({ name: "Model Summary" }, model);
 
   const values = data.map((d) => ({
@@ -195,7 +201,7 @@ export const predict = async (data: Car[], options?: Options) => {
   const { inputs, labels } = tensorData;
 
   // Train the model
-  await trainModel(model, inputs, labels, options?.epochs);
+  await trainModel(model, inputs, labels, options?.epochs, options?.onEpochEnd);
   console.log("Done Training");
 
   // Make some predictions using the model and compare them to the
