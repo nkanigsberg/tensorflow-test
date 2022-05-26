@@ -8,8 +8,11 @@ type CarSource = {
 };
 
 export type Options = {
+  learningRate?: number;
   epochs?: number;
-  onEpochEnd: (epoch: number, logs?: any) => Promise<void>;
+  onEpochEnd?: (epoch: number, logs?: any) => Promise<void>;
+  plotMin?: number;
+  plotMax?: number;
 };
 
 export const getData = async () => {
@@ -85,7 +88,7 @@ export const createModel = () => {
   model.add(tf.layers.dense({ inputShape: [1], units: 32 }));
 
   // Add a hidden layer
-  model.add(tf.layers.dense({ units: 50, activation: "sigmoid" }));
+  model.add(tf.layers.dense({ units: 32, activation: "sigmoid" }));
 
   // Add an output layer
   model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
@@ -97,12 +100,11 @@ export async function trainModel(
   model: tf.Sequential,
   inputs: tf.Tensor<tf.Rank>,
   labels: tf.Tensor<tf.Rank>,
-  epochs: number = 50,
-  onEpochEnd?: (epoch: number, logs?: tf.Logs) => Promise<void>
+  options?: Options
 ) {
   // Prepare the model for training.
   model.compile({
-    optimizer: tf.train.adam(),
+    optimizer: tf.train.adam(options?.learningRate),
     loss: tf.losses.meanSquaredError,
     metrics: ["mse"],
   });
@@ -111,10 +113,10 @@ export async function trainModel(
 
   return await model.fit(inputs, labels, {
     batchSize,
-    epochs,
+    epochs: options?.epochs ?? 50,
     shuffle: true,
     callbacks: [
-      { onEpochEnd },
+      { onEpochEnd: options?.onEpochEnd },
       tfvis.show.fitCallbacks(
         { name: "Training Performance" },
         ["loss", "mse"],
@@ -127,7 +129,9 @@ export async function trainModel(
 export function testModel(
   model: tf.Sequential,
   inputData: Car[],
-  normalizationData: Record<string, tf.Tensor<tf.Rank>>
+  normalizationData: Record<string, tf.Tensor<tf.Rank>>,
+  plotMin?: number,
+  plotMax?: number
 ) {
   const { inputMax, inputMin, labelMin, labelMax } = normalizationData;
 
@@ -135,10 +139,20 @@ export function testModel(
   // We un-normalize the data by doing the inverse of the min-max scaling
   // that we did earlier.
   const [xs, preds] = tf.tidy(() => {
-    const xs = tf.linspace(0, 1, 100);
+    const min = inputMin.dataSync()[0];
+    const max = inputMax.dataSync()[0];
+    const difference = max - min;
+    // scale the test data to correspond to user specified range
+    const xmin = plotMin === undefined ? 0 : 0 - (min - plotMin) / difference;
+    const xmax = plotMax === undefined ? 1 : 1 + (plotMax - max) / difference;
+    const xs = tf.linspace(xmin, xmax, 100);
+
     const preds = model.predict(xs.reshape([100, 1]));
 
     const unNormXs = xs.mul(inputMax.sub(inputMin)).add(inputMin);
+    // const unNormXs = xs
+    //   .mul(tf.tensor1d([300]).sub(tf.tensor1d([0])))
+    //   .add(tf.tensor1d([0]));
 
     const unNormPreds = (preds as tf.Tensor<tf.Rank>)
       .mul(labelMax.sub(labelMin))
@@ -201,10 +215,10 @@ export const predict = async (
   const { inputs, labels } = tensorData;
 
   // Train the model
-  await trainModel(model, inputs, labels, options?.epochs, options?.onEpochEnd);
+  await trainModel(model, inputs, labels, options);
   console.log("Done Training");
 
   // Make some predictions using the model and compare them to the
   // original data
-  return testModel(model, data, tensorData);
+  return testModel(model, data, tensorData, options?.plotMin, options?.plotMax);
 };

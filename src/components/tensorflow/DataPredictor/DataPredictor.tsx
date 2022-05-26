@@ -28,7 +28,10 @@ function DataPredictor() {
   );
   const [currentEpoch, setCurrentEpoch] = useState(0);
   const [loss, setLoss] = useState<number>();
-  const [epochs, setEpochs] = useState<number>(50);
+  const [epochs, setEpochs] = useState<number>(20);
+  const [learningRate, setLearningRate] = useState<number>(0.01);
+  const [plotMin, setPlotMin] = useState<number>();
+  const [plotMax, setPlotMax] = useState<number>();
 
   let model: tf.Sequential;
 
@@ -44,18 +47,23 @@ function DataPredictor() {
   const onEpochEnd = async (epoch: number, logs?: tf.Logs) => {
     setCurrentEpoch(epoch);
     setLoss(logs?.loss);
-    setPredictions(testModel(model, data, convertToTensor(data)));
+    setPredictions(
+      testModel(model, data, convertToTensor(data), plotMin, plotMax)
+    );
   };
 
   const handlePredict = async () => {
     model = createModel();
 
-    const predictedPoints = await predict(data, model, {
+    await predict(data, model, {
       epochs,
       onEpochEnd,
+      learningRate: learningRate,
+      plotMin,
+      plotMax,
     });
     // console.log(predictedPoints);
-    setPredictions(predictedPoints);
+    // setPredictions(predictedPoints);
   };
 
   return (
@@ -80,11 +88,35 @@ function DataPredictor() {
         Show visor
       </button>
       <label>
+        Learning rate:
+        <input
+          type="number"
+          onChange={(e) => setLearningRate(parseFloat(e.target.value))}
+          value={learningRate}
+        />
+      </label>
+      <label>
         # of epochs:
         <input
           type="number"
           onChange={(e) => setEpochs(parseInt(e.target.value))}
           value={epochs}
+        />
+      </label>
+      <label>
+        Plot min:
+        <input
+          type="number"
+          onChange={(e) => setPlotMin(parseInt(e.target.value))}
+          value={plotMin}
+        />
+      </label>
+      <label>
+        Plot max:
+        <input
+          type="number"
+          onChange={(e) => setPlotMax(parseInt(e.target.value))}
+          value={plotMax}
         />
       </label>
       <button type="button" onClick={handlePredict}>
@@ -128,6 +160,7 @@ function DataPredictor() {
                   display: true,
                   text: "Horsepower",
                 },
+                suggestedMin: 0,
               },
               y: {
                 title: {
