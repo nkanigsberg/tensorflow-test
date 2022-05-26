@@ -88,7 +88,7 @@ export const createModel = () => {
   model.add(tf.layers.dense({ inputShape: [1], units: 32 }));
 
   // Add a hidden layer
-  model.add(tf.layers.dense({ units: 32, activation: "sigmoid" }));
+  model.add(tf.layers.dense({ units: 120, activation: "relu" }));
 
   // Add an output layer
   model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
@@ -221,4 +221,14 @@ export const predict = async (
   // Make some predictions using the model and compare them to the
   // original data
   return testModel(model, data, tensorData, options?.plotMin, options?.plotMax);
+};
+
+/** Generate pseudo-random data points along a sine wave with some noise */
+export const generateSinePoints = (length = 1, points = 100, noise = 0.25) => {
+  const xs = Array.from(
+    { length: points },
+    (_, i) => (i / points) * 3 * length
+  );
+  const ys = xs.map((x) => Math.sin(x) + Math.random() * noise);
+  return xs.map((x, i) => ({ x, y: ys[i] }));
 };

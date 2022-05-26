@@ -10,6 +10,7 @@ import {
   convertToTensor,
   testModel,
   createModel,
+  generateSinePoints,
 } from "./helpers";
 
 import styles from "./DataPredictor.module.css";
@@ -32,16 +33,23 @@ function DataPredictor() {
   const [learningRate, setLearningRate] = useState<number>(0.01);
   const [plotMin, setPlotMin] = useState<number>();
   const [plotMax, setPlotMax] = useState<number>();
+  const [dataset, setDataset] = useState<string>("cars");
 
   let model: tf.Sequential;
 
   // fetch data on mount
   useEffect(() => {
     (async () => {
-      const data = await getData();
+      const data =
+        dataset === "cars"
+          ? await getData()
+          : generateSinePoints(5).map(({ x, y }) => ({
+              horsepower: x,
+              mpg: y,
+            }));
       setData(data);
     })();
-  }, []);
+  }, [dataset]);
 
   /** Custom callback to run at the end of each epoch */
   const onEpochEnd = async (epoch: number, logs?: tf.Logs) => {
@@ -69,17 +77,28 @@ function DataPredictor() {
   return (
     <div>
       <h2>2D data prediction</h2>
-      {/* <fieldset>
-        <legend>Prediction type</legend>
+      <fieldset>
+        <legend>Dataset</legend>
         <label>
-          Linear
-          <input type="radio" name="predictionType" />
+          Cars
+          <input
+            type="radio"
+            name="predictionType"
+            onChange={(e) => setDataset(e.target.value)}
+            value="cars"
+            defaultChecked
+          />
         </label>
         <label>
-          Non-linear
-          <input type="radio" name="predictionType" />
+          Sine
+          <input
+            type="radio"
+            name="predictionType"
+            onChange={(e) => setDataset(e.target.value)}
+            value="sine"
+          />
         </label>
-      </fieldset> */}
+      </fieldset>
       <button
         type="button"
         onClick={() => tfvis.visor().open()}
@@ -160,7 +179,7 @@ function DataPredictor() {
                   display: true,
                   text: "Horsepower",
                 },
-                suggestedMin: 0,
+                // suggestedMin: 0,
               },
               y: {
                 title: {
