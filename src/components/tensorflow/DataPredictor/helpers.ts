@@ -118,7 +118,7 @@ export async function trainModel(
     callbacks: [
       { onEpochEnd: options?.onEpochEnd },
       tfvis.show.fitCallbacks(
-        { name: "Training Performance" },
+        { name: "Training Performance", tab: "2D Prediction" },
         ["loss", "mse"],
         { height: 200, callbacks: ["onEpochEnd"] }
       ),
