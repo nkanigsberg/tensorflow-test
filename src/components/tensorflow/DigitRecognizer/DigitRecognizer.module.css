@@ -11,3 +11,13 @@
 .prediction {
   margin-left: 20px;
 }
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.controls label {
+  margin-bottom: 5px;
+}

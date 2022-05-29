@@ -22,6 +22,11 @@ const CANVAS_SCALE = 5;
 function DigitRecognizer() {
   const [prediction, setPrediction] = useState<string>("");
   const [model, setModel] = useState<tf.Sequential>();
+  const [trainDataSize, setTrainDataSize] = useState<number>(5500);
+  const [testDataSize, setTestDataSize] = useState<number>(1000);
+  const [batchSize, setBatchSize] = useState<number>(512);
+  const [epochs, setEpochs] = useState<number>(10);
+  const [learningRate, setLearningRate] = useState<number>(0.001);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -29,15 +34,20 @@ function DigitRecognizer() {
     const data = new MnistData();
     await data.load();
     await showExamples(data);
-    const model = getModel();
-    setModel(getModel());
+    const model = getModel(learningRate);
+    setModel(model);
 
     tfvis.show.modelSummary(
       { name: "Model Architecture", tab: "Model" },
       model
     );
 
-    await train(model, data);
+    await train(model, data, {
+      batchSize,
+      epochs,
+      trainDataSize,
+      testDataSize,
+    });
 
     await showAccuracy(model, data);
     await showConfusion(model, data);
@@ -90,6 +100,50 @@ function DigitRecognizer() {
   return (
     <div>
       <h2>Digit Recognition</h2>
+      <div className={styles.controls}>
+        <p>Size of dataset: 65000</p>
+        <label>
+          Train data size:
+          <input
+            type="number"
+            onChange={(e) => setTrainDataSize(parseInt(e.target.value))}
+            value={trainDataSize}
+          />
+        </label>
+        <label>
+          Test data size:
+          <input
+            type="number"
+            onChange={(e) => setTestDataSize(parseInt(e.target.value))}
+            value={testDataSize}
+          />
+        </label>
+        <label>
+          Batch size:
+          <input
+            type="number"
+            onChange={(e) => setBatchSize(parseInt(e.target.value))}
+            value={batchSize}
+          />
+        </label>
+        <label>
+          Epochs:
+          <input
+            type="number"
+            onChange={(e) => setEpochs(parseInt(e.target.value))}
+            value={epochs}
+          />
+        </label>
+        <label>
+          Learning rate:
+          <input
+            type="number"
+            onChange={(e) => setLearningRate(parseFloat(e.target.value))}
+            value={learningRate}
+          />
+        </label>
+      </div>
+
       <button type="button" onClick={run}>
         Train model
       </button>

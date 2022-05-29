@@ -1,8 +1,14 @@
 import * as tf from "@tensorflow/tfjs";
-import { Rank } from "@tensorflow/tfjs";
 import * as tfvis from "@tensorflow/tfjs-vis";
 
 import { MnistData } from "./data";
+
+type Options = {
+  epochs?: number;
+  trainDataSize?: number;
+  testDataSize?: number;
+  batchSize?: number;
+};
 
 export async function showExamples(data: MnistData) {
   // Create a container in the visor
@@ -34,7 +40,7 @@ export async function showExamples(data: MnistData) {
   }
 }
 
-export function getModel() {
+export function getModel(learningRate = 0.001) {
   const model = tf.sequential();
 
   const IMAGE_WIDTH = 28;
@@ -90,7 +96,7 @@ export function getModel() {
 
   // Choose an optimizer, loss function and accuracy metric,
   // then compile and return the model
-  const optimizer = tf.train.adam();
+  const optimizer = tf.train.adam(learningRate);
   model.compile({
     optimizer: optimizer,
     loss: "categoricalCrossentropy",
@@ -100,7 +106,11 @@ export function getModel() {
   return model;
 }
 
-export async function train(model: tf.Sequential, data: MnistData) {
+export async function train(
+  model: tf.Sequential,
+  data: MnistData,
+  options?: Options
+) {
   const metrics = ["loss", "val_loss", "acc", "val_acc"];
   const container = {
     name: "Model Training",
@@ -109,9 +119,9 @@ export async function train(model: tf.Sequential, data: MnistData) {
   };
   const fitCallbacks = tfvis.show.fitCallbacks(container, metrics);
 
-  const BATCH_SIZE = 512;
-  const TRAIN_DATA_SIZE = 5500 * 2;
-  const TEST_DATA_SIZE = 1000 * 2;
+  const BATCH_SIZE = options?.batchSize ?? 512;
+  const TRAIN_DATA_SIZE = options?.testDataSize ?? 5500;
+  const TEST_DATA_SIZE = options?.testDataSize ?? 1000;
 
   const [trainXs, trainYs] = tf.tidy(() => {
     const d = data.nextTrainBatch(TRAIN_DATA_SIZE);
@@ -126,7 +136,7 @@ export async function train(model: tf.Sequential, data: MnistData) {
   return model.fit(trainXs, trainYs, {
     batchSize: BATCH_SIZE,
     validationData: [testXs, testYs], // not shown to model during training, used for metrics
-    epochs: 10,
+    epochs: options?.epochs ?? 10,
     shuffle: true,
     callbacks: fitCallbacks,
   });
