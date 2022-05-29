@@ -1,0 +1,13 @@
+.canvas {
+  display: block;
+  margin-top: 20px;
+}
+
+.canvasContainer {
+  display: flex;
+  align-items: center;
+}
+
+.prediction {
+  margin-left: 20px;
+}

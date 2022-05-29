@@ -110,8 +110,8 @@ export async function train(model: tf.Sequential, data: MnistData) {
   const fitCallbacks = tfvis.show.fitCallbacks(container, metrics);
 
   const BATCH_SIZE = 512;
-  const TRAIN_DATA_SIZE = 5500;
-  const TEST_DATA_SIZE = 1000;
+  const TRAIN_DATA_SIZE = 5500 * 2;
+  const TEST_DATA_SIZE = 1000 * 2;
 
   const [trainXs, trainYs] = tf.tidy(() => {
     const d = data.nextTrainBatch(TRAIN_DATA_SIZE);
