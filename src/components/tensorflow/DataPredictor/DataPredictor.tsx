@@ -22,6 +22,11 @@ export type Car = {
 
 Chart.register(...registerables);
 
+/**
+ * This component trains a model to make predictions from numerical data and graphs the results.
+ *
+ * Note: This is largely based on this TensorFlow.js tutorial: https://www.tensorflow.org/js/tutorials/training/linear_regression
+ */
 function DataPredictor() {
   const [data, setData] = useState<Car[]>([]);
   const [predictions, setPredictions] = useState<{ x: number; y: number }[]>(
@@ -70,82 +75,93 @@ function DataPredictor() {
       plotMin,
       plotMax,
     });
-    // console.log(predictedPoints);
-    // setPredictions(predictedPoints);
+  };
+
+  const changeDataset = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDataset(e.target.value);
+    setPredictions([]);
+    setLoss(undefined);
+    setCurrentEpoch(0);
   };
 
   return (
     <div>
       <h2>2D data prediction</h2>
-      <fieldset>
-        <legend>Dataset</legend>
+      <div className={styles.controls}>
+        <fieldset>
+          <legend>Dataset</legend>
+          <label>
+            Cars
+            <input
+              type="radio"
+              name="predictionType"
+              onChange={changeDataset}
+              value="cars"
+              defaultChecked
+            />
+          </label>
+          <label>
+            Sine
+            <input
+              type="radio"
+              name="predictionType"
+              onChange={changeDataset}
+              value="sine"
+            />
+          </label>
+        </fieldset>
+        <button
+          type="button"
+          onClick={() => tfvis.visor().open()}
+          className={styles.visorButton}
+        >
+          Show visor
+        </button>
         <label>
-          Cars
+          Learning rate:
           <input
-            type="radio"
-            name="predictionType"
-            onChange={(e) => setDataset(e.target.value)}
-            value="cars"
-            defaultChecked
+            type="number"
+            onChange={(e) => setLearningRate(parseFloat(e.target.value))}
+            value={learningRate}
           />
         </label>
         <label>
-          Sine
+          # of epochs:
           <input
-            type="radio"
-            name="predictionType"
-            onChange={(e) => setDataset(e.target.value)}
-            value="sine"
+            type="number"
+            onChange={(e) => setEpochs(parseInt(e.target.value))}
+            value={epochs}
           />
         </label>
-      </fieldset>
+        <label>
+          Plot min:
+          <input
+            type="number"
+            onChange={(e) => setPlotMin(parseInt(e.target.value))}
+            value={plotMin}
+          />
+        </label>
+        <label>
+          Plot max:
+          <input
+            type="number"
+            onChange={(e) => setPlotMax(parseInt(e.target.value))}
+            value={plotMax}
+          />
+        </label>
+      </div>
       <button
         type="button"
-        onClick={() => tfvis.visor().open()}
-        className={styles.visorButton}
+        onClick={handlePredict}
+        className={styles.predictButton}
       >
-        Show visor
-      </button>
-      <label>
-        Learning rate:
-        <input
-          type="number"
-          onChange={(e) => setLearningRate(parseFloat(e.target.value))}
-          value={learningRate}
-        />
-      </label>
-      <label>
-        # of epochs:
-        <input
-          type="number"
-          onChange={(e) => setEpochs(parseInt(e.target.value))}
-          value={epochs}
-        />
-      </label>
-      <label>
-        Plot min:
-        <input
-          type="number"
-          onChange={(e) => setPlotMin(parseInt(e.target.value))}
-          value={plotMin}
-        />
-      </label>
-      <label>
-        Plot max:
-        <input
-          type="number"
-          onChange={(e) => setPlotMax(parseInt(e.target.value))}
-          value={plotMax}
-        />
-      </label>
-      <button type="button" onClick={handlePredict}>
         Predict
       </button>
 
-      {/* <div> */}
-      <div>Current epoch: {currentEpoch}</div>
-      {loss && <div>Loss: {loss.toFixed(8)}</div>}
-      {/* </div> */}
+      <div className={styles.infoPanel}>
+        <div>Current epoch: {currentEpoch}</div>
+        {loss && <div>Loss: {loss.toFixed(6)}</div>}
+      </div>
 
       <div className={styles.chartContainer}>
         <ReactChart
@@ -179,7 +195,6 @@ function DataPredictor() {
                   display: true,
                   text: "Horsepower",
                 },
-                // suggestedMin: 0,
               },
               y: {
                 title: {

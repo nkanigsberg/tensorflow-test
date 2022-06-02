@@ -8,3 +8,37 @@
   width: 50%;
   min-width: 800px;
 }
+
+.controls {
+  display: flex;
+  flex-direction: column;
+}
+
+.controls label,
+.controls fieldset {
+  margin-bottom: 5px;
+}
+
+.controls label input {
+  margin-left: 5px;
+}
+
+.controls fieldset {
+  max-width: 300px;
+}
+
+.controls fieldset label:last-child {
+  margin-left: 5px;
+}
+
+.predictButton {
+  margin-bottom: 5px;
+}
+
+.infoPanel {
+  display: flex;
+}
+
+.infoPanel div:not(:first-child) {
+  margin-left: 10px;
+}

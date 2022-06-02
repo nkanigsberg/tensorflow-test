@@ -20,7 +20,6 @@ export const getData = async () => {
     "https://storage.googleapis.com/tfjs-tutorials/carsData.json"
   );
   const carsData: CarSource[] = await carsDataResponse.json();
-  // console.log(carsData);
   const cleaned: Car[] = carsData
     .map((car) => ({
       mpg: car.Miles_per_Gallon,
@@ -56,10 +55,6 @@ export function convertToTensor(data: Car[]) {
     const inputMin = inputTensor.min();
     const labelMax = labelTensor.max();
     const labelMin = labelTensor.min();
-    // console.log(inputMax.dataSync());
-    // console.log(inputMin.dataSync());
-    // console.log(labelMax.dataSync());
-    // console.log(labelMin.dataSync());
 
     const normalizedInputs = inputTensor
       .sub(inputMin)
@@ -150,9 +145,6 @@ export function testModel(
     const preds = model.predict(xs.reshape([100, 1]));
 
     const unNormXs = xs.mul(inputMax.sub(inputMin)).add(inputMin);
-    // const unNormXs = xs
-    //   .mul(tf.tensor1d([300]).sub(tf.tensor1d([0])))
-    //   .add(tf.tensor1d([0]));
 
     const unNormPreds = (preds as tf.Tensor<tf.Rank>)
       .mul(labelMax.sub(labelMin))
@@ -172,7 +164,7 @@ export function testModel(
   }));
 
   tfvis.render.scatterplot(
-    { name: "Model Predictions vs Original Data" },
+    { name: "Model Predictions vs Original Data", tab: "2D Prediction" },
     {
       values: [originalPoints, predictedPoints],
       series: ["original", "predicted"],
@@ -192,7 +184,10 @@ export const predict = async (
   model: tf.Sequential,
   options?: Options
 ) => {
-  tfvis.show.modelSummary({ name: "Model Summary" }, model);
+  tfvis.show.modelSummary(
+    { name: "Model Summary", tab: "2D Prediction" },
+    model
+  );
 
   const values = data.map((d) => ({
     x: d.horsepower,
@@ -201,7 +196,7 @@ export const predict = async (
 
   // display ts scatterplot
   tfvis.render.scatterplot(
-    { name: "Horsepower v MPG" },
+    { name: "Horsepower v MPG", tab: "2D Prediction" },
     { values },
     {
       xLabel: "Horsepower",

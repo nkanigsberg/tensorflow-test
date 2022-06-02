@@ -66,7 +66,7 @@ export const DigitCanvas = React.forwardRef<HTMLCanvasElement, Props>(
           onMouseLeave={stopDrawing}
         ></canvas>
 
-        <button type="button" onClick={erase}>
+        <button type="button" onClick={erase} className={styles.clearButton}>
           Clear
         </button>
       </div>

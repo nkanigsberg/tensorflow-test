@@ -19,6 +19,10 @@ import styles from "./DigitRecognizer.module.css";
 
 const CANVAS_SCALE = 5;
 
+/** This component trains a model to recognize handwritten digits with a convolutional neural network, and then uses that model to predict the digit drawn by the user.
+ *
+ * Note: This is largely based on this TensorFlow.js tutorial: https://www.tensorflow.org/js/tutorials/training/handwritten_digit_cnn
+ */
 function DigitRecognizer() {
   const [prediction, setPrediction] = useState<string>("");
   const [model, setModel] = useState<tf.Sequential>();
@@ -98,10 +102,10 @@ function DigitRecognizer() {
   };
 
   return (
-    <div>
+    <div className={styles.digitRecognizer}>
       <h2>Digit Recognition</h2>
       <div className={styles.controls}>
-        <p>Size of dataset: 65000</p>
+        <p>Size of dataset: 60000</p>
         <label>
           Train data size:
           <input
@@ -157,7 +161,11 @@ function DigitRecognizer() {
         )}
       </div>
       {model && (
-        <button type="button" onClick={recognize}>
+        <button
+          type="button"
+          onClick={recognize}
+          className={styles.recognizeButton}
+        >
           Recognize
         </button>
       )}
